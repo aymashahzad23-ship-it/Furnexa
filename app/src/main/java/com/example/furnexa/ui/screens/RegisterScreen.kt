@@ -67,7 +67,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password") },
+                label = { Text("Password (min 6 chars)") },
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -97,10 +97,7 @@ fun RegisterScreen(
 
             Button(
                 onClick = {
-                    if (password != confirmPassword) {
-                        return@Button
-                    }
-                    viewModel.signUp(email, password)
+                    viewModel.signUp(email, password, confirmPassword)
                 },
                 modifier = Modifier
                     .fillMaxWidth()

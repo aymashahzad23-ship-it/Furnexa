@@ -13,6 +13,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.furnexa.ui.admin.AdminDashboardScreen
+import com.example.furnexa.ui.admin.AdminFurnitureFormScreen
+import com.example.furnexa.ui.admin.AdminFurnitureListScreen
+import com.example.furnexa.ui.admin.AdminFurnitureViewModel
 import com.example.furnexa.ui.auth.AuthState
 import com.example.furnexa.ui.auth.AuthViewModel
 import com.example.furnexa.ui.catalog.FurnitureViewModel
@@ -77,11 +81,21 @@ fun FurnexaNavGraph(
             }
         }
         is AuthState.Authenticated -> {
-            val email = (authState as AuthState.Authenticated).email
-            AuthenticatedNavGraph(
-                email = email,
-                authViewModel = viewModel
-            )
+            val auth = authState as AuthState.Authenticated
+            val email = auth.email
+            val isAdmin = auth.isAdmin
+
+            if (isAdmin) {
+                AdminNavGraph(
+                    email = email,
+                    authViewModel = viewModel
+                )
+            } else {
+                AuthenticatedNavGraph(
+                    email = email,
+                    authViewModel = viewModel
+                )
+            }
         }
         is AuthState.Error -> {
             NavHost(
@@ -98,6 +112,53 @@ fun FurnexaNavGraph(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun AdminNavGraph(
+    email: String,
+    authViewModel: AuthViewModel
+) {
+    val navController = rememberNavController()
+    val adminViewModel: AdminFurnitureViewModel = viewModel()
+
+    NavHost(
+        navController = navController,
+        startDestination = "admin_dashboard"
+    ) {
+        composable("admin_dashboard") {
+            AdminDashboardScreen(
+                email = email,
+                viewModel = adminViewModel,
+                authViewModel = authViewModel,
+                onNavigateToList = { navController.navigate("admin_list") },
+                onNavigateToAdd = { navController.navigate("admin_form") }
+            )
+        }
+        composable("admin_list") {
+            AdminFurnitureListScreen(
+                viewModel = adminViewModel,
+                onBack = { navController.popBackStack() },
+                onAdd = { navController.navigate("admin_form") },
+                onEdit = { furnitureId -> navController.navigate("admin_form/$furnitureId") }
+            )
+        }
+        composable("admin_form") {
+            AdminFurnitureFormScreen(
+                furnitureId = null,
+                viewModel = adminViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+        composable("admin_form/{furnitureId}") { backStackEntry ->
+            val furnitureId = backStackEntry.arguments?.getString("furnitureId")?.toIntOrNull()
+            AdminFurnitureFormScreen(
+                furnitureId = furnitureId,
+                viewModel = adminViewModel,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
